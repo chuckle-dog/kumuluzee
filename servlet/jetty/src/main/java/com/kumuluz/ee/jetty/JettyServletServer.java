@@ -136,7 +136,11 @@ public class JettyServletServer implements ServletServer {
             } catch (Exception e) {
                 throw new IllegalStateException("Unable to set custom classloader for Jetty", e);
             }
-        } else {
+        }
+        else if (ResourceUtils.isRunningAsSkimmedJar()) {
+            appContext.setAttribute(JettyAttributes.jarPattern, ClasspathAttributes.jar);
+        }
+        else {
             StringBuilder explodedClasspath = new StringBuilder(ClasspathAttributes.exploded);
 
             if (ResourceUtils.isRunningTests()) {

@@ -30,6 +30,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.logging.Logger;
 
 /**
  * @author Tilen Faganel
@@ -105,6 +106,13 @@ public class ResourceUtils {
 
         return (jar == null || jar.toString().toLowerCase().startsWith("jar:"))
                 && ResourceUtils.class.getClassLoader().getClass().getName().equals("com.kumuluz.ee.loader.EeClassLoader");
+    }
+
+    public static boolean isRunningAsSkimmedJar() {
+
+        URL jar = ResourceUtils.class.getClassLoader().getResource("webapp");
+
+        return (jar != null && jar.toString().toLowerCase().contains("skimmed.jar"));
     }
 
     public static boolean isRunningTests() {

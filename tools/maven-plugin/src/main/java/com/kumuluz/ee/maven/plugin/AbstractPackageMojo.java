@@ -23,7 +23,9 @@ package com.kumuluz.ee.maven.plugin;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.codehaus.plexus.util.FileUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -47,8 +49,14 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
     private static final String TEMP_DIR_NAME_PREFIX = "kumuluzee-loader";
     private static final String CLASS_SUFFIX = ".class";
 
+    private static final String JAR_TYPE_UBER = "uber";
+    private static final String JAR_TYPE_SKIMMED = "skimmed";
+
     @Parameter(defaultValue = "com.kumuluz.ee.EeApplication")
     private String mainClass;
+
+    @Parameter(defaultValue = JAR_TYPE_UBER, property = "jarType")
+    private String jarType;
 
     private String buildDirectory;
     private String outputDirectory;
@@ -59,11 +67,20 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
         outputDirectory = project.getBuild().getOutputDirectory();
         finalName = project.getBuild().getFinalName();
 
-        checkPrecoditions();
-        copyDependencies("classes/lib");
-        unpackDependencies();
-        packageJar();
-        renameJars();
+        if (jarType.equals(JAR_TYPE_UBER)) {
+            checkPrecoditions();
+            copyDependencies("classes/lib");
+            unpackDependencies();
+            packageJar();
+            renameJars();
+        }
+        else if (jarType.equals(JAR_TYPE_SKIMMED)){
+            getLog().info("Packaging into SkimmedJAR");
+
+            checkPrecoditions();
+            copyDependencies("lib");
+            packageSkimmedJar();
+        }
     }
 
     private void checkPrecoditions() throws MojoExecutionException {
@@ -176,6 +193,31 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
         );
     }
 
+    private void packageSkimmedJar() throws MojoExecutionException {
+        executeMojo(
+                plugin(
+                        groupId("org.apache.maven.plugins"),
+                        artifactId("maven-jar-plugin"),
+                        version(MojoConstants.MAVEN_JAR_PLUGIN_VERSION)
+                ),
+                goal("jar"),
+                configuration(
+                        element("finalName", "kumuluz"),
+                        element("outputDirectory", buildDirectory),
+                        element("classifier", "skimmed"),
+                        element("forceCreation", "true"),
+                        element("archive",
+                                element("manifest",
+                                        element("addClasspath", "true"),
+                                        element("classpathPrefix", "lib/"),
+                                        element("mainClass", "com.kumuluz.ee.EeApplication")
+                                )
+                        )
+                ),
+                executionEnvironment(project, session, buildPluginManager)
+        );
+    }
+
     private void renameJars() throws MojoExecutionException {
         try {
             Path sourcePath1 = Paths.get(buildDirectory, finalName + ".jar");
@@ -211,4 +253,19 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
             throw new MojoExecutionException("Unable to rename the final build artifact.");
         }
     }
+
+    private void copySkimmedModules(){
+
+        String modulesDirPath = outputDirectory + File.separator + "modules";
+
+        File modulesDir = new File(modulesDirPath);
+
+        if (!modulesDir.exists()){
+            if (!modulesDir.mkdir()){
+                getLog().warn("Could not create modules directory.");
+            }
+        }
+
+    }
+
 }
