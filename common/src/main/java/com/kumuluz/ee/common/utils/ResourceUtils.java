@@ -30,6 +30,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.jar.Manifest;
 import java.util.logging.Logger;
 
 /**
@@ -102,6 +103,10 @@ public class ResourceUtils {
 
     public static boolean isRunningInJar() {
 
+        PackagingType packagingType = getPackagingType();
+
+        Logger.getLogger(ResourceUtils.class.getName()).info(packagingType.name());
+
         URL jar = ResourceUtils.class.getClassLoader().getResource("webapp");
 
         return (jar == null || jar.toString().toLowerCase().startsWith("jar:"))
@@ -110,9 +115,43 @@ public class ResourceUtils {
 
     public static boolean isRunningAsSkimmedJar() {
 
+        getPackagingType();
+
+        PackagingType packagingType = getPackagingType();
+
+        Logger.getLogger(ResourceUtils.class.getName()).info(packagingType.name());
+
         URL jar = ResourceUtils.class.getClassLoader().getResource("webapp");
 
         return (jar != null && jar.toString().toLowerCase().contains("skimmed.jar"));
+    }
+
+    private static PackagingType getPackagingType(){
+
+        try {
+            URL manifestURL = ResourceUtils.class.getClassLoader().getResource("META-INF/MANIFEST.MF");
+
+
+            if (manifestURL != null){
+
+                Logger.getLogger(ResourceUtils.class.getName()).info(manifestURL.toString());
+                Manifest manifest = new Manifest(manifestURL.openStream());
+
+                String packagingType = manifest.getMainAttributes().getValue("packagingType");
+
+                if (packagingType != null){
+                    Logger.getLogger(ResourceUtils.class.getName()).info(packagingType);
+                    return PackagingType.getTypeFromString(packagingType);
+                }
+
+            }
+            return PackagingType.EXPLODED;
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     public static boolean isRunningTests() {

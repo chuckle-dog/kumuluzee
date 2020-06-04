@@ -23,7 +23,6 @@ package com.kumuluz.ee.maven.plugin;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,14 +48,15 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
     private static final String TEMP_DIR_NAME_PREFIX = "kumuluzee-loader";
     private static final String CLASS_SUFFIX = ".class";
 
-    private static final String JAR_TYPE_UBER = "uber";
-    private static final String JAR_TYPE_SKIMMED = "skimmed";
+    private static final String PACKAGING_TYPE_UBER = "uber";
+    private static final String PACKAGING_TYPE_SKIMMED = "skimmed";
+    private static final String PACKAGING_TYPE_EXPLODED = "exploded";
 
     @Parameter(defaultValue = "com.kumuluz.ee.EeApplication")
     private String mainClass;
 
-    @Parameter(defaultValue = JAR_TYPE_UBER, property = "jarType")
-    private String jarType;
+    @Parameter(defaultValue = PACKAGING_TYPE_UBER, property = "packagingType")
+    private String packagingType;
 
     private String buildDirectory;
     private String outputDirectory;
@@ -67,19 +67,28 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
         outputDirectory = project.getBuild().getOutputDirectory();
         finalName = project.getBuild().getFinalName();
 
-        if (jarType.equals(JAR_TYPE_UBER)) {
+        packagingType = packagingType.trim().toLowerCase();
+
+        if (packagingType.equals(PACKAGING_TYPE_UBER)) {
             checkPrecoditions();
             copyDependencies("classes/lib");
             unpackDependencies();
             packageJar();
             renameJars();
         }
-        else if (jarType.equals(JAR_TYPE_SKIMMED)){
-            getLog().info("Packaging into SkimmedJAR");
-
+        else if (packagingType.equals(PACKAGING_TYPE_SKIMMED)){
             checkPrecoditions();
             copyDependencies("lib");
             packageSkimmedJar();
+        }
+        /*
+        * Can add this to make packaging into exploded a bit more streamlined
+        *
+        else if (packagingType.equals(JAR_TYPE_EXPLODED)){
+        }
+        */
+        else {
+            getLog().warn("Unknown packaging type. Skipping KumuluzEE packaging.");
         }
     }
 
@@ -186,6 +195,9 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
                         element("archive",
                                 element("manifest",
                                         element("mainClass", "com.kumuluz.ee.loader.EeBootLoader")
+                                ),
+                                element("manifestEntries",
+                                        element("packagingType", packagingType)
                                 )
                         )
                 ),
@@ -202,7 +214,7 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
                 ),
                 goal("jar"),
                 configuration(
-                        element("finalName", "kumuluz"),
+                        element("finalName", finalName),
                         element("outputDirectory", buildDirectory),
                         element("classifier", "skimmed"),
                         element("forceCreation", "true"),
@@ -211,6 +223,9 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
                                         element("addClasspath", "true"),
                                         element("classpathPrefix", "lib/"),
                                         element("mainClass", "com.kumuluz.ee.EeApplication")
+                                ),
+                                element("manifestEntries",
+                                        element("packagingType", packagingType)
                                 )
                         )
                 ),
