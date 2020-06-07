@@ -23,13 +23,16 @@ package com.kumuluz.ee.common.utils;
 import com.kumuluz.ee.common.config.DevConfig;
 import com.kumuluz.ee.common.config.EeConfig;
 import com.kumuluz.ee.common.exceptions.KumuluzServerException;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.jar.Manifest;
 import java.util.logging.Logger;
 

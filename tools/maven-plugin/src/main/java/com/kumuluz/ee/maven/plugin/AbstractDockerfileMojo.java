@@ -1,23 +1,42 @@
+/*
+ *  Copyright (c) 2014-2017 Kumuluz and/or its affiliates
+ *  and other contributors as indicated by the @author tags and
+ *  the contributor list.
+ *
+ *  Licensed under the MIT License (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  https://opensource.org/licenses/MIT
+ *
+ *  The software is provided "AS IS", WITHOUT WARRANTY OF ANY KIND, express or
+ *  implied, including but not limited to the warranties of merchantability,
+ *  fitness for a particular purpose and noninfringement. in no event shall the
+ *  authors or copyright holders be liable for any claim, damages or other
+ *  liability, whether in an action of contract, tort or otherwise, arising from,
+ *  out of or in connection with the software or the use or other dealings in the
+ *  software. See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.kumuluz.ee.maven.plugin;
 
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
+import com.kumuluz.ee.common.utils.KumuluzProject;
+import com.kumuluz.ee.common.utils.MustacheWriter;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public abstract class AbstractDockerfileMojo extends AbstractMojo {
@@ -36,15 +55,23 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
     @Parameter(defaultValue = "uber", required = true)
     private String packagingType;
 
-    private static final String DOCKERFILE_SKIMMED_TEMPLATE = "dockerfileSkimmed.mustache";
-    private static final String DOCKERFILE_UBER_TEMPLATE = "dockerfileUber.mustache";
-    private static final String DOCKERIGNORE_TEMPLATE = "dockerignore.mustache";
+    @Parameter(defaultValue = "false", required = true)
+    private String windowsOS;
+
+    private static final String DOCKERFILE_SKIMMED_TEMPLATE = "dockerfile-generation/dockerfileSkimmed.mustache";
+    private static final String DOCKERFILE_EXPLODED_TEMPLATE = "dockerfile-generation/dockerfileExploded.mustache";
+    private static final String DOCKERFILE_UBER_TEMPLATE = "dockerfile-generation/dockerfileUber.mustache";
+    private static final String DOCKERIGNORE_TEMPLATE = "dockerfile-generation/dockerignore.mustache";
 
     private static final String DEFAULT_PORT = "8080";
+
+    private KumuluzProject kumuluzProject;
 
     private boolean generateDockerfile = true;
 
     public void generateDockerfile() throws MojoExecutionException, MojoFailureException {
+
+        kumuluzProject = new KumuluzProject();
 
         packagingType = packagingType.toLowerCase().trim();
 
@@ -60,10 +87,17 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
         }
         /*
         * Can add this to make packaging into exploded a bit more streamlined
-        *
-        else if (packagingType.equals("exploded")){
-        }
         */
+        else if (packagingType.equals("exploded")){
+            String OS = System.getProperty("os.name").toLowerCase();
+            if (windowsOS.equals("true")){
+                kumuluzProject.setWindowsOS(true);
+            }
+            else {
+                kumuluzProject.setWindowsOS(false);
+            }
+            dockerfileTemplate = DOCKERFILE_EXPLODED_TEMPLATE;
+        }
         else {
             getLog().warn("Unknown packaging type. Skipping KumuluzEE Dockerfile generation.");
             return;
@@ -72,22 +106,21 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
         List<String> modules = project.getModules();
         List<Dependency> dependencies = project.getDependencies();
         LinkedList<String> moduleFileNames = new LinkedList<>();
-        HashMap<String, Object> mustacheContext = new HashMap<>();
 
         String port = readPortFromConfig();
         if (port == null){
             port = DEFAULT_PORT;
         }
-        mustacheContext.put("port", port);
 
-        mustacheContext.put("executableName", executableName);
+        kumuluzProject.setPort(port);
+        kumuluzProject.setExecutableName(executableName);
 
         // Single-module project
         if (project.getParent() == null && modules.size() == 0) {
-            mustacheContext.put("name", project.getName());
-            mustacheContext.put("description", project.getDescription());
+            kumuluzProject.setName(project.getName());
+            kumuluzProject.setDescription(project.getDescription());
 
-            writeFileFromTemplate(dockerfileTemplate, "Dockerfile", mustacheContext);
+            MustacheWriter.writeFileFromTemplate(dockerfileTemplate, "Dockerfile", kumuluzProject, outputDirectory);
         }
         // Multi-module project
         else if (project.getParent() != null && modules.size() == 0){
@@ -101,23 +134,23 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
                     if (parent != null){
                         for (Object module : parent.getModules()){
                             if (!project.getArtifactId().equals(module)) {
-                                String moduleFileName = String.format("%s-%s.jar", module.toString(), parent.getVersion());
-                                moduleFileNames.add(moduleFileName);
+                                String moduleExecutableName = String.format("%s-%s.jar", module.toString(), parent.getVersion());
+                                moduleFileNames.add(moduleExecutableName);
+                                KumuluzProject kumuluzModule = kumuluzProject.newModule(module.toString());
+                                kumuluzModule.setExecutableName(moduleExecutableName);
                             }
                         }
-
-                        mustacheContext.put("modules", moduleFileNames);
                     }
 
                     if (packagingType.equals("skimmed")){
                         copySkimmedModules(moduleFileNames);
                     }
 
-                    mustacheContext.put("name", parent.getName());
-                    mustacheContext.put("description", parent.getDescription());
+                    kumuluzProject.setName(parent.getName());
+                    kumuluzProject.setDescription(parent.getDescription());
 
-                    writeFileFromTemplate(dockerfileTemplate, "Dockerfile", mustacheContext);
-                    writeFileFromTemplate(DOCKERIGNORE_TEMPLATE, ".dockerignore", mustacheContext);
+                    MustacheWriter.writeFileFromTemplate(dockerfileTemplate, "Dockerfile", kumuluzProject, outputDirectory);
+                    MustacheWriter.writeFileFromTemplate(DOCKERIGNORE_TEMPLATE, ".dockerignore", kumuluzProject, outputDirectory);
 
                     break;
                 }
@@ -134,52 +167,32 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
      */
     private String readPortFromConfig(){
 
-        BufferedReader reader;
         try {
-            reader = new BufferedReader(new FileReader( resources.get(0).getDirectory() + "/config.yaml"));
+            File configYaml = new File(resources.get(0).getDirectory() + "/config.yaml");
 
-            String line = reader.readLine();
-            while (line != null){
-                if (line.contains("port:")){
-                    return line.substring(line.indexOf("port:") + 5).trim();
+            Yaml yaml = new Yaml();
+            InputStream inputStream = new FileInputStream(configYaml);
+            Map<String, Object> config = yaml.load(inputStream);
+
+            Object kumuluzee = config.get("kumuluzee");
+            if (kumuluzee instanceof HashMap){
+                Object server = ((HashMap) kumuluzee).get("server");
+                if (server instanceof HashMap){
+                    Object http = ((HashMap) server).get("http");
+                    if (http instanceof HashMap){
+                        Object port = ((HashMap) http).get("port");
+                        if (port != null){
+                            return port.toString();
+                        }
+                    }
                 }
-                line = reader.readLine();
             }
         }
         catch (IOException e){
             e.printStackTrace();
         }
-        return null;
-    }
 
-    /**
-     * Writes a file in the output directory with the given template and data
-     *
-     * @param templateFile name of template file to use (located in the resources directory)
-     * @param finalName final name of written file (will be created in the target directory)
-     * @param mustacheContext a map of data for the mustache compiler to use in the templates
-     */
-    private void writeFileFromTemplate(String templateFile, String finalName, HashMap<String, Object> mustacheContext){
-        log.info("Writing file: " + finalName);
-
-        MustacheFactory mf = new DefaultMustacheFactory();
-        Mustache m = mf.compile(templateFile);
-
-        StringWriter writer = new StringWriter();
-
-        try {
-            m.execute(writer, mustacheContext).flush();
-            FileWriter fileWriter = new FileWriter(outputDirectory.getAbsolutePath() + File.separator + finalName);
-
-            fileWriter.write(writer.toString());
-            fileWriter.close();
-
-            getLog().info("Writing successful.");
-        }
-        catch (IOException e){
-            e.printStackTrace();
-            getLog().warn("Error writing file: " + finalName);
-        }
+        return "8080";
     }
 
     /**
@@ -210,7 +223,6 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
                 e.printStackTrace();
             }
         }
-
     }
 
 }

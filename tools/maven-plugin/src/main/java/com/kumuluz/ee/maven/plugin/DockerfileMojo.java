@@ -18,26 +18,21 @@
  *  software. See the License for the specific language governing permissions and
  *  limitations under the License.
 */
-package com.kumuluz.ee.common.utils;
+package com.kumuluz.ee.maven.plugin;
 
-public enum PackagingType {
-    UBER,
-    SKIMMED,
-    EXPLODED;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
 
-    public static PackagingType getTypeFromString(String string){
-        if (string == null){
-            return null;
-        }
-        switch (string.trim().toLowerCase()){
-            case "uber":
-                return UBER;
-            case "skimmed":
-                return SKIMMED;
-            case "exploded":
-                return EXPLODED;
-            default:
-                return null;
-        }
+@Mojo(
+        name = "generate-dockerfile",
+        defaultPhase = LifecyclePhase.PACKAGE
+)
+public class DockerfileMojo extends AbstractDockerfileMojo {
+
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        generateDockerfile();
     }
 }

@@ -69,24 +69,23 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
 
         packagingType = packagingType.trim().toLowerCase();
 
+        checkPrecoditions();
         if (packagingType.equals(PACKAGING_TYPE_UBER)) {
-            checkPrecoditions();
             copyDependencies("classes/lib");
             unpackDependencies();
             packageJar();
             renameJars();
         }
         else if (packagingType.equals(PACKAGING_TYPE_SKIMMED)){
-            checkPrecoditions();
             copyDependencies("lib");
             packageSkimmedJar();
         }
         /*
         * Can add this to make packaging into exploded a bit more streamlined
-        *
-        else if (packagingType.equals(JAR_TYPE_EXPLODED)){
-        }
         */
+        else if (packagingType.equals(PACKAGING_TYPE_EXPLODED)){
+            copyDependencies();
+        }
         else {
             getLog().warn("Unknown packaging type. Skipping KumuluzEE packaging.");
         }

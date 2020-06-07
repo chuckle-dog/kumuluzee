@@ -7,7 +7,7 @@ ENV INSTALL_DIR ${DEPLOY_DIR}/lib
 COPY lib ${INSTALL_DIR}
 
 {{#modules}}
-COPY modules/{{.}} ${INSTALL_DIR}
+COPY modules/{{executableName}} ${INSTALL_DIR}
 {{/modules}}
 
 COPY {{executableName}} ${DEPLOY_DIR}

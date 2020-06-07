@@ -17,27 +17,19 @@
  *  out of or in connection with the software or the use or other dealings in the
  *  software. See the License for the specific language governing permissions and
  *  limitations under the License.
-*/
-package com.kumuluz.ee.common.utils;
+ */
+package com.kumuluz.ee.maven.plugin;
 
-public enum PackagingType {
-    UBER,
-    SKIMMED,
-    EXPLODED;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
 
-    public static PackagingType getTypeFromString(String string){
-        if (string == null){
-            return null;
-        }
-        switch (string.trim().toLowerCase()){
-            case "uber":
-                return UBER;
-            case "skimmed":
-                return SKIMMED;
-            case "exploded":
-                return EXPLODED;
-            default:
-                return null;
-        }
+@Mojo(name = "generate-project", requiresProject = false, defaultPhase = LifecyclePhase.NONE)
+public class GenerateProjectMojo extends AbstractGenerateProjectMojo {
+
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        generate();
     }
 }
