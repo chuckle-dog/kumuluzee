@@ -25,7 +25,6 @@ import com.kumuluz.ee.common.attributes.ClasspathAttributes;
 import com.kumuluz.ee.common.config.EeConfig;
 import com.kumuluz.ee.common.config.GzipConfig;
 import com.kumuluz.ee.common.config.ServerConfig;
-import com.kumuluz.ee.common.config.ServerConnectorConfig;
 import com.kumuluz.ee.common.dependencies.EeComponentType;
 import com.kumuluz.ee.common.dependencies.ServerDef;
 import com.kumuluz.ee.common.exceptions.KumuluzServerException;

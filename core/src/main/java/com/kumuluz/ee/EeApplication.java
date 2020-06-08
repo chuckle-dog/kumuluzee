@@ -21,13 +21,7 @@
 package com.kumuluz.ee;
 
 import com.kumuluz.ee.common.*;
-import com.kumuluz.ee.common.config.DataSourceConfig;
-import com.kumuluz.ee.common.config.DataSourcePoolConfig;
 import com.kumuluz.ee.common.config.EeConfig;
-import com.kumuluz.ee.common.config.XaDataSourceConfig;
-import com.kumuluz.ee.common.datasources.NonJtaXADataSourceWrapper;
-import com.kumuluz.ee.common.datasources.XADataSourceBuilder;
-import com.kumuluz.ee.common.datasources.XADataSourceWrapper;
 import com.kumuluz.ee.common.dependencies.*;
 import com.kumuluz.ee.common.exceptions.KumuluzServerException;
 import com.kumuluz.ee.common.filters.PoweredByFilter;
@@ -46,13 +40,10 @@ import com.kumuluz.ee.configuration.utils.ConfigurationImpl;
 import com.kumuluz.ee.configuration.utils.ConfigurationUtil;
 import com.kumuluz.ee.factories.AgroalDataSourceFactory;
 import com.kumuluz.ee.factories.EeConfigFactory;
-import com.kumuluz.ee.factories.JtaXADataSourceFactory;
 import com.kumuluz.ee.loaders.*;
 import com.kumuluz.ee.logs.impl.JavaUtilDefaultLogConfigurator;
-import com.zaxxer.hikari.HikariDataSource;
 import io.agroal.api.AgroalDataSource;
 
-import javax.sql.XADataSource;
 import java.util.*;
 import java.util.logging.Handler;
 import java.util.logging.LogManager;

@@ -23,16 +23,13 @@ package com.kumuluz.ee.common.utils;
 import com.kumuluz.ee.common.config.DevConfig;
 import com.kumuluz.ee.common.config.EeConfig;
 import com.kumuluz.ee.common.exceptions.KumuluzServerException;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.jar.Manifest;
 import java.util.logging.Logger;
 
@@ -114,19 +111,6 @@ public class ResourceUtils {
 
         return (jar == null || jar.toString().toLowerCase().startsWith("jar:"))
                 && ResourceUtils.class.getClassLoader().getClass().getName().equals("com.kumuluz.ee.loader.EeClassLoader");
-    }
-
-    public static boolean isRunningAsSkimmedJar() {
-
-        getPackagingType();
-
-        PackagingType packagingType = getPackagingType();
-
-        Logger.getLogger(ResourceUtils.class.getName()).info(packagingType.name());
-
-        URL jar = ResourceUtils.class.getClassLoader().getResource("webapp");
-
-        return (jar != null && jar.toString().toLowerCase().contains("skimmed.jar"));
     }
 
     public static PackagingType getPackagingType(){
