@@ -47,11 +47,11 @@ public class Prompter {
 
     public static KumuluzProject promptUserForProjectInfo(KumuluzProject kumuluzProject){
 
-        String name = promptUserForInputWithDefault("Enter project name", "KumuluzEE-Hello-World");
         String groupId = promptUserForInputPersistant("Enter groupId");
         String artifactId = promptUserForInputPersistant("Enter artifactId");
         String projectVersion = promptUserForInputWithDefault("Enter project version", "1.0-SNAPSHOT");
         String kumuluzVersion = promptUserForInputWithDefault("Enter KumuluzEE version", "3.10.0-SNAPSHOT");
+        String name = artifactId;
 
         kumuluzProject.setName(name);
         kumuluzProject.setGroupId(groupId);

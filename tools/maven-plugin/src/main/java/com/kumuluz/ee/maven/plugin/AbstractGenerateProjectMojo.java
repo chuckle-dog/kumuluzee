@@ -113,7 +113,7 @@ public abstract class AbstractGenerateProjectMojo extends AbstractMojo {
         String groupId = project.getGroupId();
         String artifactId = project.getArtifactId();
         String version = project.getVersion();
-        String name = Prompter.promptUserForInputWithDefault("Enter project name", "KumuluzEE-Hello-World");
+        String name = outputDirectory.getName();
 
         kumuluzProject.setGroupId(groupId);
         kumuluzProject.setArtifactId(artifactId);

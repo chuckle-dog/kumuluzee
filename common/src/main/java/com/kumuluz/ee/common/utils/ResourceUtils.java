@@ -129,7 +129,7 @@ public class ResourceUtils {
         return (jar != null && jar.toString().toLowerCase().contains("skimmed.jar"));
     }
 
-    private static PackagingType getPackagingType(){
+    public static PackagingType getPackagingType(){
 
         try {
             URL manifestURL = ResourceUtils.class.getClassLoader().getResource("META-INF/MANIFEST.MF");
@@ -137,7 +137,6 @@ public class ResourceUtils {
 
             if (manifestURL != null){
 
-                Logger.getLogger(ResourceUtils.class.getName()).info(manifestURL.toString());
                 Manifest manifest = new Manifest(manifestURL.openStream());
 
                 String packagingType = manifest.getMainAttributes().getValue("packagingType");
