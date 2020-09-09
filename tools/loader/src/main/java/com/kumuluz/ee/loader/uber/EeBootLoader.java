@@ -18,38 +18,39 @@
  *  software. See the License for the specific language governing permissions and
  *  limitations under the License.
 */
-package com.kumuluz.ee.loader.exception;
+package com.kumuluz.ee.loader.uber;
+
+import com.kumuluz.ee.loader.uber.exception.EeClassLoaderException;
+
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
 /**
  * @author Benjamin Kastelic
- * @since 2.4.0
+ *
  */
-public class EeClassLoaderException extends RuntimeException {
+public class EeBootLoader {
 
-    public EeClassLoaderException(String message) {
-        super(message);
-    }
+    public static void main(String[] args) throws Throwable {
 
-    public EeClassLoaderException(String message, Throwable cause) {
-        super(message, cause);
-    }
+        try {
+            ResourceBundle bootLoaderProperties = ResourceBundle.getBundle("META-INF/kumuluzee/boot-loader");
 
-    public String getMessageAll() {
-        StringBuilder stringBuilder = new StringBuilder();
+            String mainClass = bootLoaderProperties.getString("main-class");
 
-        for (Throwable e = this;  e != null;  e = e.getCause()) {
-            if (stringBuilder.length() > 0) {
-                stringBuilder.append(" / ");
-            }
+            launch(args, mainClass);
+        } catch (MissingResourceException e) {
 
-            String message = e.getMessage();
-            if (message == null  ||  message.length() == 0) {
-                message = e.getClass().getSimpleName();
-            }
-
-            stringBuilder.append(message);
+            throw new EeClassLoaderException("KumuluzEE Boot Loader config properties are malformed or missing.", e);
         }
+    }
 
-        return stringBuilder.toString();
+    /**
+     * Start the boot procedure.
+     * Use the {@link EeClassLoader} EeClassLoader to find, load and start the main class.
+     */
+    private static void launch(String[] args, String mainClass) throws Throwable {
+        EeClassLoader classLoader = new EeClassLoader();
+        classLoader.invokeMain(mainClass, args);
     }
 }

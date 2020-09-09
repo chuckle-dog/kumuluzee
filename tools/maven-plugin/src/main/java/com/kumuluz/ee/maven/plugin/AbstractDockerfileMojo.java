@@ -85,9 +85,6 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
             dockerfileTemplate = DOCKERFILE_SKIMMED_TEMPLATE;
             executableName = executableName.replace(".jar", "-skimmed.jar");
         }
-        /*
-        * Can add this to make packaging into exploded a bit more streamlined
-        */
         else if (packagingType.equals("exploded")){
             String OS = System.getProperty("os.name").toLowerCase();
             if (windowsOS.equals("true")){

@@ -18,12 +18,12 @@
  *  software. See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.kumuluz.ee.loader;
+package com.kumuluz.ee.loader.uber;
 
-import com.kumuluz.ee.loader.exception.EeClassLoaderException;
-import com.kumuluz.ee.loader.jar.FileInfo;
-import com.kumuluz.ee.loader.jar.JarEntryInfo;
-import com.kumuluz.ee.loader.jar.JarFileInfo;
+import com.kumuluz.ee.loader.uber.exception.EeClassLoaderException;
+import com.kumuluz.ee.loader.uber.jar.FileInfo;
+import com.kumuluz.ee.loader.uber.jar.JarEntryInfo;
+import com.kumuluz.ee.loader.uber.jar.JarFileInfo;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;

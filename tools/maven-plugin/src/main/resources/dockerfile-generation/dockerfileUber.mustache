@@ -1,9 +1,7 @@
 FROM openjdk:8
 LABEL{{#name}} name="{{name}}"{{/name}}{{#description}} description="{{description}}"{{/description}}
 
-ENV DEPLOY_DIR /opt
+COPY {{executableName}} /opt
 
-COPY {{executableName}} ${DEPLOY_DIR}
-
-ENTRYPOINT java -jar ${DEPLOY_DIR}/{{executableName}}
+ENTRYPOINT ["java", "-jar", "/opt/{{executableName}}"]
 EXPOSE {{port}}

@@ -20,7 +20,10 @@
  */
 package com.kumuluz.ee.maven.plugin;
 
+import com.kumuluz.ee.common.utils.ResourceUtils;
+import jdk.internal.loader.Resource;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Repository;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
 
@@ -33,7 +36,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarFile;
 
 import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
@@ -78,6 +83,7 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
         }
         else if (packagingType.equals(PACKAGING_TYPE_SKIMMED)){
             copyDependencies("lib");
+            unpackDependencies();
             packageSkimmedJar();
         }
         /*
@@ -119,7 +125,8 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
             JarFile loaderJar = new JarFile(tmpJar.toFile());
 
             loaderJar.stream().parallel()
-                    .filter(loaderJarEntry -> loaderJarEntry.getName().toLowerCase().endsWith(CLASS_SUFFIX))
+                    .filter(loaderJarEntry -> loaderJarEntry.getName().toLowerCase().endsWith(CLASS_SUFFIX) &&
+                            loaderJarEntry.getName().toLowerCase().contains(packagingType))
                     .forEach(loaderJarEntry -> {
                         try {
 
@@ -155,12 +162,56 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
                 Files.createDirectories(loaderConfParent);
             }
 
-            String loaderConfContent = "main-class=" + mainClass;
+            StringBuilder loaderConfContent = new StringBuilder("main-class=" + mainClass);
 
-            Files.write(loaderConf, loaderConfContent.getBytes(StandardCharsets.UTF_8));
+            if (packagingType.equals(PACKAGING_TYPE_SKIMMED)){
+                loaderConfContent.append("\nrepository-paths=" + String.join(",", getRepositoryPaths()));
+                loaderConfContent.append("\ndependency-paths=" + String.join(",", getDependencyPaths()));
+            }
+
+            Files.write(loaderConf, loaderConfContent.toString().getBytes(StandardCharsets.UTF_8));
+
         } catch (IOException e) {
             throw new MojoExecutionException("Failed to unpack kumuluzee-loader dependency: " + e.getMessage() + ".");
         }
+    }
+
+    private List<String> getRepositoryPaths(){
+
+        List<Repository> repositories = project.getRepositories();
+
+        // Move maven central repo to first position
+        for (Repository repository : repositories) {
+            if (repository.getId().equals("central")) {
+                repositories.remove(repository);
+                repositories.add(0, repository);
+            }
+        }
+
+        List<String> repoPaths = new LinkedList<>();
+        for (Repository repository : repositories){
+            repoPaths.add(repository.getUrl());
+        }
+
+        return repoPaths;
+    }
+
+    private List<String> getDependencyPaths(){
+
+        List<String> depPaths = new LinkedList<>();
+        for (Artifact artifact : (Set<Artifact>)project.getArtifacts()){
+            String filename = String.format("%s-%s.jar", artifact.getArtifactId(), artifact.getVersion());
+            String filepath = String.join("/",
+                    artifact.getGroupId().replaceAll("\\.", "/"),
+                    artifact.getArtifactId(),
+                    artifact.getVersion(),
+                    filename
+            );
+
+            depPaths.add(filepath);
+        }
+
+        return depPaths;
     }
 
     private URI getPluginJarPath() throws MojoExecutionException {
@@ -193,7 +244,7 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
                         element("forceCreation", "true"),
                         element("archive",
                                 element("manifest",
-                                        element("mainClass", "com.kumuluz.ee.loader.EeBootLoader")
+                                        element("mainClass", "com.kumuluz.ee.loader.uber.EeBootLoader")
                                 ),
                                 element("manifestEntries",
                                         element("packagingType", packagingType)
@@ -221,7 +272,7 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
                                 element("manifest",
                                         element("addClasspath", "true"),
                                         element("classpathPrefix", "lib/"),
-                                        element("mainClass", "com.kumuluz.ee.EeApplication")
+                                        element("mainClass", "com.kumuluz.ee.loader.skimmed.EeSkimmedLoader")
                                 ),
                                 element("manifestEntries",
                                         element("packagingType", packagingType)

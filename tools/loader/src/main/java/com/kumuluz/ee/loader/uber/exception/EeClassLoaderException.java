@@ -18,39 +18,38 @@
  *  software. See the License for the specific language governing permissions and
  *  limitations under the License.
 */
-package com.kumuluz.ee.loader;
-
-import com.kumuluz.ee.loader.exception.EeClassLoaderException;
-
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
+package com.kumuluz.ee.loader.uber.exception;
 
 /**
  * @author Benjamin Kastelic
- *
+ * @since 2.4.0
  */
-public class EeBootLoader {
+public class EeClassLoaderException extends RuntimeException {
 
-    public static void main(String[] args) throws Throwable {
-
-        try {
-            ResourceBundle bootLoaderProperties = ResourceBundle.getBundle("META-INF/kumuluzee/boot-loader");
-
-            String mainClass = bootLoaderProperties.getString("main-class");
-
-            launch(args, mainClass);
-        } catch (MissingResourceException e) {
-
-            throw new EeClassLoaderException("KumuluzEE Boot Loader config properties are malformed or missing.", e);
-        }
+    public EeClassLoaderException(String message) {
+        super(message);
     }
 
-    /**
-     * Start the boot procedure.
-     * Use the {@link EeClassLoader} EeClassLoader to find, load and start the main class.
-     */
-    private static void launch(String[] args, String mainClass) throws Throwable {
-        EeClassLoader classLoader = new EeClassLoader();
-        classLoader.invokeMain(mainClass, args);
+    public EeClassLoaderException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public String getMessageAll() {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (Throwable e = this;  e != null;  e = e.getCause()) {
+            if (stringBuilder.length() > 0) {
+                stringBuilder.append(" / ");
+            }
+
+            String message = e.getMessage();
+            if (message == null  ||  message.length() == 0) {
+                message = e.getClass().getSimpleName();
+            }
+
+            stringBuilder.append(message);
+        }
+
+        return stringBuilder.toString();
     }
 }

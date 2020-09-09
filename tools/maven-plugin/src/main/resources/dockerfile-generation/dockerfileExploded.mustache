@@ -1,15 +1,12 @@
 FROM openjdk:8
 LABEL{{#name}} name="{{name}}"{{/name}}{{#description}} description="{{description}}"{{/description}}
 
-ENV DEPLOY_DIR /opt
-
-COPY classes ${DEPLOY_DIR}/classes
-COPY dependency ${DEPLOY_DIR}/dependency
-
+COPY dependency /opt/dependency
+COPY classes /opt/classes
 {{#windowsOS}}
-ENTRYPOINT java -cp ${DEPLOY_DIR}/classes;${DEPLOY_DIR}/dependency/* com.kumuluz.ee.EeApplication
+ENTRYPOINT ["java", "-cp", "/opt/classes;/opt/dependency/*", "com.kumuluz.ee.EeApplication"]
 {{/windowsOS}}
 {{^windowsOS}}
-ENTRYPOINT java -cp ${DEPLOY_DIR}/classes:${DEPLOY_DIR}/dependency/* com.kumuluz.ee.EeApplication
+ENTRYPOINT ["java", "-cp", "/opt/classes:/opt/dependency/*", "com.kumuluz.ee.EeApplication"]
 {{/windowsOS}}
 EXPOSE {{port}}

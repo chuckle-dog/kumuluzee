@@ -18,9 +18,9 @@
  *  software. See the License for the specific language governing permissions and
  *  limitations under the License.
 */
-package com.kumuluz.ee.loader.jar;
+package com.kumuluz.ee.loader.uber.jar;
 
-import com.kumuluz.ee.loader.exception.EeClassLoaderException;
+import com.kumuluz.ee.loader.uber.exception.EeClassLoaderException;
 
 import java.io.DataInputStream;
 import java.io.File;

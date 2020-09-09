@@ -20,7 +20,7 @@
  */
 package com.kumuluz.ee.jetty;
 
-import com.kumuluz.ee.loader.EeClassLoader;
+import com.kumuluz.ee.loader.uber.EeClassLoader;
 
 import java.util.List;
 
