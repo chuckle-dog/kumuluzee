@@ -609,8 +609,8 @@ public class EeApplication {
         else if (packagingType.equals(PackagingType.UBER)) {
             log.info("KumuluzEE running inside an UBER JAR runtime.");
         }
-        else if (packagingType.equals(PackagingType.SKIMMED)){
-            log.info("KumuluzEE running inside a SKIMMED JAR runtime");
+        else if (packagingType.equals(PackagingType.SMART)){
+            log.info("KumuluzEE running inside a SMART JAR runtime");
         }
         else {
             log.info("KumuluzEE running in an EXPLODED class and dependency runtime.");

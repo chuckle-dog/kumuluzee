@@ -18,7 +18,7 @@
  *  software. See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.kumuluz.ee.loader.skimmed;
+package com.kumuluz.ee.loader.smart;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -51,7 +51,7 @@ public class DependencyResolver {
                 log.info(dep.substring(dep.lastIndexOf("/") + 1));
             }
 
-            if (!SkimmedPrompter.promptUserForBoolean("Download missing dependencies?")){
+            if (!SmartPrompter.promptUserForBoolean("Download missing dependencies?")){
                 return false;
             }
 
@@ -145,7 +145,7 @@ public class DependencyResolver {
     public static String getJarDirectory(){
 
         try {
-            String jarPath = new File(EeSkimmedLoader.class.getProtectionDomain().getCodeSource().getLocation()
+            String jarPath = new File(EeSmartLoader.class.getProtectionDomain().getCodeSource().getLocation()
                     .toURI()).getPath();
 
             return jarPath.substring(0, jarPath.lastIndexOf(File.separator));

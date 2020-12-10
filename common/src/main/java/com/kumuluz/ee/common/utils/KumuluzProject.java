@@ -24,6 +24,8 @@ public class KumuluzProject {
 
     private List<KumuluzProject> modules;
 
+    private List<KumuluzProject> appModules;
+
     private String packageName;
 
     private HashMap<String, String> directoryPaths;
@@ -38,6 +40,7 @@ public class KumuluzProject {
 
     public KumuluzProject(){
         this.modules = new LinkedList<>();
+        this.appModules = new LinkedList<>();
         this.directoryPaths = new HashMap<>();
     }
 
@@ -52,6 +55,21 @@ public class KumuluzProject {
         module.setPort(this.port);
 
         this.modules.add(module);
+
+        return module;
+    }
+
+    public KumuluzProject newAppModule(String artifactId){
+        KumuluzProject module = new KumuluzProject();
+        module.setModule(true);
+        module.setArtifactId(artifactId);
+        module.setGroupId(this.groupId);
+        module.setKumuluzVersion(this.kumuluzVersion);
+        module.setVersion(this.version);
+        module.setParentArtifactId(this.artifactId);
+        module.setPort(this.port);
+
+        this.appModules.add(module);
 
         return module;
     }
@@ -124,9 +142,18 @@ public class KumuluzProject {
         return modules;
     }
 
+    public void setAppModules(List<KumuluzProject> modules) {
+        this.appModules = modules;
+    }
+
+    public List<KumuluzProject> getAppModules() {
+        return appModules;
+    }
+
     public void setModules(List<KumuluzProject> modules) {
         this.modules = modules;
     }
+
 
     public String getPackageName() {
         return packageName;

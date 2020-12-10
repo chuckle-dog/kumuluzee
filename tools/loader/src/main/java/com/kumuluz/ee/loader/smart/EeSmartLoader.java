@@ -18,7 +18,7 @@
  *  software. See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.kumuluz.ee.loader.skimmed;
+package com.kumuluz.ee.loader.smart;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -29,14 +29,14 @@ import java.util.ResourceBundle;
  * @author Aljaž Pavišič
  *
  */
-public class EeSkimmedLoader {
+public class EeSmartLoader {
 
     private static String RESOLVE_DEPENDENCIES = "resolveDependencies";
 
     public static void main(String[] args) throws Throwable {
 
         if (args.length > 1) {
-            SkimmedPrompter.promptUser("Too many arguments. Use 1 or none");
+            SmartPrompter.promptUser("Too many arguments. Use 1 or none");
             return;
         }
 
@@ -52,7 +52,7 @@ public class EeSkimmedLoader {
             if (args.length == 0) {
 
                 if (missingDeps.size() == 0){
-                    ClassLoader classLoader = EeSkimmedLoader.class.getClassLoader();
+                    ClassLoader classLoader = EeSmartLoader.class.getClassLoader();
                     Class<?> clazz = classLoader.loadClass(mainClass);
 
                     Method method = clazz.getMethod("main", String[].class);
@@ -62,15 +62,15 @@ public class EeSkimmedLoader {
                     }
                 }
                 else {
-                    SkimmedPrompter.promptUser("One or more dependencies are missing. Terminating boot process.");
+                    SmartPrompter.promptUser("One or more dependencies are missing. Terminating boot process.");
                 }
             }
             else if (args[0].equals(RESOLVE_DEPENDENCIES)){
                 if (DependencyResolver.resolveDependencies(repositoryArray, missingDeps)){
-                    SkimmedPrompter.promptUser("All dependencies downloaded. You may now run the application normally.");
+                    SmartPrompter.promptUser("All dependencies downloaded. You may now run the application normally.");
                 }
                 else {
-                    SkimmedPrompter.promptUser("One or more dependencies could not be downloaded.");
+                    SmartPrompter.promptUser("One or more dependencies could not be downloaded.");
                 }
             }
 

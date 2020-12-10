@@ -54,7 +54,7 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
     private static final String CLASS_SUFFIX = ".class";
 
     private static final String PACKAGING_TYPE_UBER = "uber";
-    private static final String PACKAGING_TYPE_SKIMMED = "skimmed";
+    private static final String PACKAGING_TYPE_SMART = "smart";
     private static final String PACKAGING_TYPE_EXPLODED = "exploded";
 
     @Parameter(defaultValue = "com.kumuluz.ee.EeApplication")
@@ -81,10 +81,10 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
             packageJar();
             renameJars();
         }
-        else if (packagingType.equals(PACKAGING_TYPE_SKIMMED)){
+        else if (packagingType.equals(PACKAGING_TYPE_SMART)){
             copyDependencies("lib");
             unpackDependencies();
-            packageSkimmedJar();
+            packageSmartJar();
         }
         /*
         * Can add this to make packaging into exploded a bit more streamlined
@@ -164,7 +164,7 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
 
             StringBuilder loaderConfContent = new StringBuilder("main-class=" + mainClass);
 
-            if (packagingType.equals(PACKAGING_TYPE_SKIMMED)){
+            if (packagingType.equals(PACKAGING_TYPE_SMART)){
                 loaderConfContent.append("\nrepository-paths=" + String.join(",", getRepositoryPaths()));
                 loaderConfContent.append("\ndependency-paths=" + String.join(",", getDependencyPaths()));
             }
@@ -255,7 +255,7 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
         );
     }
 
-    private void packageSkimmedJar() throws MojoExecutionException {
+    private void packageSmartJar() throws MojoExecutionException {
         executeMojo(
                 plugin(
                         groupId("org.apache.maven.plugins"),
@@ -266,13 +266,13 @@ public abstract class AbstractPackageMojo extends AbstractCopyDependenciesMojo {
                 configuration(
                         element("finalName", finalName),
                         element("outputDirectory", buildDirectory),
-                        element("classifier", "skimmed"),
+                        element("classifier", "smart"),
                         element("forceCreation", "true"),
                         element("archive",
                                 element("manifest",
                                         element("addClasspath", "true"),
                                         element("classpathPrefix", "lib/"),
-                                        element("mainClass", "com.kumuluz.ee.loader.skimmed.EeSkimmedLoader")
+                                        element("mainClass", "com.kumuluz.ee.loader.smart.EeSmartLoader")
                                 ),
                                 element("manifestEntries",
                                         element("packagingType", packagingType)

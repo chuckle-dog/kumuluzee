@@ -22,7 +22,7 @@ package com.kumuluz.ee.common.utils;
 
 public enum PackagingType {
     UBER,
-    SKIMMED,
+    SMART,
     EXPLODED;
 
     public static PackagingType getTypeFromString(String string){
@@ -32,8 +32,8 @@ public enum PackagingType {
         switch (string.trim().toLowerCase()){
             case "uber":
                 return UBER;
-            case "skimmed":
-                return SKIMMED;
+            case "smart":
+                return SMART;
             case "exploded":
                 return EXPLODED;
             default:

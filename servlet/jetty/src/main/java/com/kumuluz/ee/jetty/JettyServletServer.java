@@ -142,7 +142,7 @@ public class JettyServletServer implements ServletServer {
                 throw new IllegalStateException("Unable to set custom classloader for Jetty", e);
             }
         }
-        else if (packagingType.equals(PackagingType.SKIMMED)) {
+        else if (packagingType.equals(PackagingType.SMART)) {
             appContext.setAttribute(JettyAttributes.jarPattern, ClasspathAttributes.jar);
         }
         else {

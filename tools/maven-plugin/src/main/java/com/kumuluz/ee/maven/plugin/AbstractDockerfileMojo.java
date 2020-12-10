@@ -20,6 +20,7 @@
  */
 package com.kumuluz.ee.maven.plugin;
 
+import com.google.common.collect.Sets;
 import com.kumuluz.ee.common.utils.KumuluzProject;
 import com.kumuluz.ee.common.utils.MustacheWriter;
 import org.apache.maven.model.Dependency;
@@ -33,10 +34,7 @@ import org.codehaus.plexus.util.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 public abstract class AbstractDockerfileMojo extends AbstractMojo {
@@ -58,7 +56,10 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
     @Parameter(defaultValue = "false", required = true)
     private String windowsOS;
 
-    private static final String DOCKERFILE_SKIMMED_TEMPLATE = "dockerfile-generation/dockerfileSkimmed.mustache";
+    @Parameter(property = "appModules")
+    private String[] appModules;
+
+    private static final String DOCKERFILE_SMART_TEMPLATE = "dockerfile-generation/dockerfileSmart.mustache";
     private static final String DOCKERFILE_EXPLODED_TEMPLATE = "dockerfile-generation/dockerfileExploded.mustache";
     private static final String DOCKERFILE_UBER_TEMPLATE = "dockerfile-generation/dockerfileUber.mustache";
     private static final String DOCKERIGNORE_TEMPLATE = "dockerfile-generation/dockerignore.mustache";
@@ -81,9 +82,9 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
         if (packagingType.equals("uber")){
             dockerfileTemplate = DOCKERFILE_UBER_TEMPLATE;
         }
-        else if (packagingType.equals("skimmed")){
-            dockerfileTemplate = DOCKERFILE_SKIMMED_TEMPLATE;
-            executableName = executableName.replace(".jar", "-skimmed.jar");
+        else if (packagingType.equals("smart")){
+            dockerfileTemplate = DOCKERFILE_SMART_TEMPLATE;
+            executableName = executableName.replace(".jar", "-smart.jar");
         }
         else if (packagingType.equals("exploded")){
             String OS = System.getProperty("os.name").toLowerCase();
@@ -101,6 +102,7 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
         }
 
         List<String> modules = project.getModules();
+        HashSet<String> appModulesSet = Sets.newHashSet(appModules);
         List<Dependency> dependencies = project.getDependencies();
         LinkedList<String> moduleFileNames = new LinkedList<>();
 
@@ -133,14 +135,21 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
                             if (!project.getArtifactId().equals(module)) {
                                 String moduleExecutableName = String.format("%s-%s.jar", module.toString(), parent.getVersion());
                                 moduleFileNames.add(moduleExecutableName);
-                                KumuluzProject kumuluzModule = kumuluzProject.newModule(module.toString());
-                                kumuluzModule.setExecutableName(moduleExecutableName);
+
+                                if (appModulesSet.contains(module.toString())){
+                                    KumuluzProject kumuluzModule = kumuluzProject.newAppModule(module.toString());
+                                    kumuluzModule.setExecutableName(moduleExecutableName);
+                                }
+                                else {
+                                    KumuluzProject kumuluzModule = kumuluzProject.newModule(module.toString());
+                                    kumuluzModule.setExecutableName(moduleExecutableName);
+                                }
                             }
                         }
                     }
 
-                    if (packagingType.equals("skimmed")){
-                        copySkimmedModules(moduleFileNames);
+                    if (packagingType.equals("smart")){
+                        copySmartModules(moduleFileNames);
                     }
 
                     kumuluzProject.setName(parent.getName());
@@ -199,7 +208,7 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
      *
      * @param moduleFileNames names of files to copy
      */
-    private void copySkimmedModules(List<String> moduleFileNames){
+    private void copySmartModules(List<String> moduleFileNames){
 
         File modulesDir = new File(outputDirectory.getAbsolutePath() + "/modules");
 

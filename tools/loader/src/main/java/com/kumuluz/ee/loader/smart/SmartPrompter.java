@@ -18,21 +18,21 @@
  *  software. See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.kumuluz.ee.loader.skimmed;
+package com.kumuluz.ee.loader.smart;
 
 import java.util.Scanner;
 
-public class SkimmedPrompter {
+public class SmartPrompter {
 
     private static final Scanner scanner = new Scanner(System.in);
 
 
     public static void promptUser(String message){
-        System.out.print(String.format("[KumuluzEE Skimmed Loader] %s", message));
+        System.out.print(String.format("[KumuluzEE Smart Loader] %s", message));
     }
 
     public static String promptUserForInput(String message){
-        System.out.print(String.format("[KumuluzEE Skimmed Loader] %s: ", message));
+        System.out.print(String.format("[KumuluzEE Smart Loader] %s: ", message));
         return scanner.nextLine();
     }
 
