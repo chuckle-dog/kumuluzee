@@ -1,4 +1,4 @@
-FROM openjdk:8
+FROM openjdk:{{javaVersion}}
 LABEL{{#name}} name="{{name}}"{{/name}}{{#description}} description="{{description}}"{{/description}}
 
 COPY dependency /opt/dependency

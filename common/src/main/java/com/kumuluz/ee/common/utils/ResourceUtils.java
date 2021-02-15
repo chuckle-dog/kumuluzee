@@ -103,10 +103,6 @@ public class ResourceUtils {
 
     public static boolean isRunningInJar() {
 
-        PackagingType packagingType = getPackagingType();
-
-        Logger.getLogger(ResourceUtils.class.getName()).info(packagingType.name());
-
         URL jar = ResourceUtils.class.getClassLoader().getResource("webapp");
 
         return (jar == null || jar.toString().toLowerCase().startsWith("jar:"))
@@ -117,7 +113,6 @@ public class ResourceUtils {
 
         try {
             URL manifestURL = ResourceUtils.class.getClassLoader().getResource("META-INF/MANIFEST.MF");
-
 
             if (manifestURL != null){
 
@@ -131,7 +126,9 @@ public class ResourceUtils {
                 }
 
             }
-            return PackagingType.EXPLODED;
+            else{
+                return PackagingType.EXPLODED;
+            }
         }
         catch (IOException e){
             e.printStackTrace();

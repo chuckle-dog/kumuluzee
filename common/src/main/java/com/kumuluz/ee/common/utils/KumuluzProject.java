@@ -38,6 +38,8 @@ public class KumuluzProject {
 
     private String moduleVersion = "${project.version}";
 
+    private String javaVersion;
+
     public KumuluzProject(){
         this.modules = new LinkedList<>();
         this.appModules = new LinkedList<>();
@@ -154,7 +156,6 @@ public class KumuluzProject {
         this.modules = modules;
     }
 
-
     public String getPackageName() {
         return packageName;
     }
@@ -201,5 +202,13 @@ public class KumuluzProject {
 
     public void setModuleVersion(String moduleVersion) {
         this.moduleVersion = moduleVersion;
+    }
+
+    public String getJavaVersion() {
+        return javaVersion;
+    }
+
+    public void setJavaVersion(String javaVersion) {
+        this.javaVersion = javaVersion;
     }
 }

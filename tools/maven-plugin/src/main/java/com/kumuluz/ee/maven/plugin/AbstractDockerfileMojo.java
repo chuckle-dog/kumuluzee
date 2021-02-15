@@ -59,12 +59,17 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
     @Parameter(property = "appModules")
     private String[] appModules;
 
+    @Parameter(property = "port", defaultValue = "-1")
+    private int port;
+
     private static final String DOCKERFILE_SMART_TEMPLATE = "dockerfile-generation/dockerfileSmart.mustache";
     private static final String DOCKERFILE_EXPLODED_TEMPLATE = "dockerfile-generation/dockerfileExploded.mustache";
     private static final String DOCKERFILE_UBER_TEMPLATE = "dockerfile-generation/dockerfileUber.mustache";
     private static final String DOCKERIGNORE_TEMPLATE = "dockerfile-generation/dockerignore.mustache";
 
-    private static final String DEFAULT_PORT = "8080";
+    private static final int DEFAULT_PORT = 8080;
+
+    private static final String DEFAULT_JAVA_VERSION = "11";
 
     private KumuluzProject kumuluzProject;
 
@@ -106,13 +111,18 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
         List<Dependency> dependencies = project.getDependencies();
         LinkedList<String> moduleFileNames = new LinkedList<>();
 
-        String port = readPortFromConfig();
-        if (port == null){
-            port = DEFAULT_PORT;
+        if (port == -1){
+            port = readPortFromConfig();
+        }
+        if (port <= 0 || port >= 65536){
+            getLog().warn("Invalid port value in plugin config. Port must be an integer between 1 and 65535.");
+            port = readPortFromConfig();
         }
 
-        kumuluzProject.setPort(port);
+        kumuluzProject.setPort(Integer.toString(port));
         kumuluzProject.setExecutableName(executableName);
+
+        getLog().info(project.getArtifactId());
 
         // Single-module project
         if (project.getParent() == null && modules.size() == 0) {
@@ -123,44 +133,44 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
         }
         // Multi-module project
         else if (project.getParent() != null && modules.size() == 0){
+            // Collect module JAR names
+            MavenProject parent = project.getParent();
 
-            for (Dependency dependency : dependencies){
-                // Find module with core component
-                if (dependency.getArtifactId().contains("kumuluzee-core")){
+            String javaVersion;
+            if (parent.getProperties().get("maven.compiler.target") != null){
+                javaVersion = parent.getProperties().get("maven.compiler.target").toString();
+            }
+            else {
+                javaVersion = DEFAULT_JAVA_VERSION;
+            }
+            kumuluzProject.setJavaVersion(javaVersion);
 
-                    // Collect module JAR names
-                    MavenProject parent = project.getParent();
-                    if (parent != null){
-                        for (Object module : parent.getModules()){
-                            if (!project.getArtifactId().equals(module)) {
-                                String moduleExecutableName = String.format("%s-%s.jar", module.toString(), parent.getVersion());
-                                moduleFileNames.add(moduleExecutableName);
+            for (Object module : parent.getModules()){
+                if (!project.getArtifactId().equals(module)) {
+                    String moduleExecutableName = String.format("%s-%s.jar", module.toString(), parent.getVersion());
+                    moduleFileNames.add(moduleExecutableName);
 
-                                if (appModulesSet.contains(module.toString())){
-                                    KumuluzProject kumuluzModule = kumuluzProject.newAppModule(module.toString());
-                                    kumuluzModule.setExecutableName(moduleExecutableName);
-                                }
-                                else {
-                                    KumuluzProject kumuluzModule = kumuluzProject.newModule(module.toString());
-                                    kumuluzModule.setExecutableName(moduleExecutableName);
-                                }
-                            }
-                        }
+                    if (appModulesSet.contains(module.toString())){
+                        KumuluzProject kumuluzModule = kumuluzProject.newAppModule(module.toString());
+                        kumuluzModule.setExecutableName(moduleExecutableName);
                     }
-
-                    if (packagingType.equals("smart")){
-                        copySmartModules(moduleFileNames);
+                    else {
+                        KumuluzProject kumuluzModule = kumuluzProject.newModule(module.toString());
+                        kumuluzModule.setExecutableName(moduleExecutableName);
                     }
-
-                    kumuluzProject.setName(parent.getName());
-                    kumuluzProject.setDescription(parent.getDescription());
-
-                    MustacheWriter.writeFileFromTemplate(dockerfileTemplate, "Dockerfile", kumuluzProject, outputDirectory);
-                    MustacheWriter.writeFileFromTemplate(DOCKERIGNORE_TEMPLATE, ".dockerignore", kumuluzProject, outputDirectory);
-
-                    break;
                 }
             }
+
+            if (packagingType.equals("smart")){
+                copySmartModules(moduleFileNames);
+            }
+
+            kumuluzProject.setName(parent.getName());
+            kumuluzProject.setDescription(parent.getDescription());
+
+            MustacheWriter.writeFileFromTemplate(dockerfileTemplate, "Dockerfile", kumuluzProject, outputDirectory);
+            MustacheWriter.writeFileFromTemplate(DOCKERIGNORE_TEMPLATE, ".dockerignore", kumuluzProject, outputDirectory);
+
         }
 
     }
@@ -171,7 +181,7 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
      *
      * @return
      */
-    private String readPortFromConfig(){
+    private int readPortFromConfig(){
 
         try {
             File configYaml = new File(resources.get(0).getDirectory() + "/config.yaml");
@@ -188,17 +198,20 @@ public abstract class AbstractDockerfileMojo extends AbstractMojo {
                     if (http instanceof HashMap){
                         Object port = ((HashMap) http).get("port");
                         if (port != null){
-                            return port.toString();
+                            return Integer.parseInt(port.toString());
                         }
                     }
                 }
             }
         }
+        catch (NumberFormatException e){
+            getLog().warn("Invalid port value in config.yaml.");
+        }
         catch (IOException e){
             e.printStackTrace();
         }
 
-        return "8080";
+        return DEFAULT_PORT;
     }
 
     /**

@@ -1,11 +1,11 @@
-FROM openjdk:11
+FROM openjdk:{{javaVersion}}
 LABEL{{#name}} name="{{name}}"{{/name}}{{#description}} description="{{description}}"{{/description}}
 
 COPY lib /opt/lib
 
 {{#modules}}
 COPY modules/{{executableName}} /opt/lib
-{{/modules}}{
+{{/modules}}
 {{#appModules}}
 COPY modules/{{executableName}} /opt/lib
 {{/appModules}}
